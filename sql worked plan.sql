@@ -1,5 +1,5 @@
 create database  mysql_retail_project_large;;
-use  mysql_retail_project_large;;
+use  mysql_retail_project_large;
 create table customers (
 customer_id int primary key,
 customer_name varchar(100),
