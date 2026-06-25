@@ -1,4 +1,4 @@
-create database  mysql_retail_project_large;;
+create database  mysql_retail_project_large;
 use  mysql_retail_project_large;
 create table customers (
 customer_id int primary key,
@@ -109,7 +109,7 @@ select sum(quantity) as total_units_sold  from order_items;
 -- total number of orders
 select count(*) as total_orders
 from orders;
--- the lowest quantity in a single order;
+-- the highest quantity in a single order;
 select max(quantity)
 from order_items;
 
@@ -142,7 +142,8 @@ join products
 on order_items.product_id = products.product_id
 group by customers.customer_id,
 customers.customer_name
-order by revenue desc;
+order by revenue desc
+limit 10;
 
 -- highest spending customer
 select 
@@ -168,7 +169,8 @@ from products
 join order_items
 on products.product_id = order_items.product_id
 group by products.product_name
-order by units_sold desc;
+order by units_sold desc
+limit 10;
 
 -- customer segment
 select
@@ -190,6 +192,16 @@ on orders.order_id = order_items.order_id
 join products
 on order_items.product_id = products.product_id
 group by customers.customer_name;
+
+-- highest quantity products
+select
+products.product_name,
+sum(order_items.quantity) as units_sold
+from products
+join order_items
+on products.product_id = order_items.product_id
+group by products.product_name
+order by units_sold desc; 
 
 -- dense rank
 select product_name,
@@ -217,37 +229,46 @@ on order_items.product_id = products.product_id
 group by orders.order_date
 ) sales;
 
+-- high revenue cities
+select
+customers.city,
+sum(order_items.quantity * products.unit_price) as revenue
+from customers
+join orders 
+on customers.customer_id = orders.customer_id
+join order_items
+on orders.order_id = order_items.order_id
+join products
+on order_items.product_id = products.product_id
+group by customers.city
+order by revenue desc;
 
+-- change in revenue across months
+select
+month(order_date) as sales_month,
+sum(order_items.quantity * products.unit_price) as revenue 
+from orders
+join order_items
+on orders.order_id = order_items.order_id
+join products
+on order_items.product_id = products.product_id
+group by month(order_date)
+order by sales_month;
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+-- overall business KPIs
+select
+count(distinct customers.customer_id) as total_customers,
+count( orders.order_id) as total_orders,
+sum(order_items.quantity * products.unit_price) as total_revenue,
+  round(
+        sum(order_items.quantity * products.unit_price)
+          / count(distinct orders.order_id),
+          2
+          ) as average_order_value
+from customers
+join orders 
+on customers.customer_id = orders.customer_id          
+join order_items
+on orders.order_id = order_items.order_id
+join products
+on order_items.product_id = products.product_id;
